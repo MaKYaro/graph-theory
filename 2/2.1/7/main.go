@@ -17,16 +17,24 @@ func main() {
 		fleas[i] = NewCell(x-1, y-1)
 	}
 
+	table := make([][]int, n)
+	for i := 0; i < n; i++ {
+		table[i] = make([]int, m)
+	}
+
+	bfs(table, n, m, feeder)
+
 	result := 0
 	for _, flea := range fleas {
-		distance := bfs(n, m, flea, feeder)
-		if distance == -1 {
+		if flea.Equal(feeder) {
+			continue
+		}
+		if table[flea.x][flea.y] == UNVISITED {
 			fmt.Println(-1)
 			return
 		}
-		result += distance
+		result += table[flea.x][flea.y]
 	}
-
 	fmt.Println(result)
 }
 
@@ -84,15 +92,12 @@ func (q *Queue) Pop() Cell {
 	return first
 }
 
-func bfs(n, m int, flea Cell, feeder Cell) int {
-	if flea.Equal(feeder) {
-		return 0
-	}
+func bfs(table [][]int, n, m int, feeder Cell) {
 	states := make(map[Cell]int, n*m)
-	states[flea] = VISITING
+	states[feeder] = VISITING
 
 	q := NewQueue(n * m)
-	q.Push(flea)
+	q.Push(feeder)
 
 	distance := 0
 	for q.Size() > 0 {
@@ -102,9 +107,7 @@ func bfs(n, m int, flea Cell, feeder Cell) int {
 		for l > 0 {
 			curr := q.Pop()
 			for _, nei := range findValidUnvisitedNeighbours(states, curr, n, m) {
-				if nei.Equal(feeder) {
-					return distance
-				}
+				table[nei.x][nei.y] = distance
 				states[nei] = VISITING
 				q.Push(nei)
 			}
@@ -112,8 +115,6 @@ func bfs(n, m int, flea Cell, feeder Cell) int {
 			l--
 		}
 	}
-
-	return -1
 }
 
 func findValidUnvisitedNeighbours(graph map[Cell]int, c Cell, n, m int) []Cell {
